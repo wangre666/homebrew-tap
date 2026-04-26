@@ -1,0 +1,145 @@
+name: Update GitHub Stars Manager cask
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version to publish, for example 0.5.4. Leave empty to use the latest GitHub release."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    env:
+      CASK_FILE: Casks/github-stars-manager.rb
+      UPSTREAM_REPO: AmintaCCCP/GithubStarsManager
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out tap
+        uses: actions/checkout@v4
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          requested_version="${{ inputs.version }}"
+          if [[ -z "$requested_version" ]]; then
+            requested_version="$(gh release view --repo "$UPSTREAM_REPO" --json tagName --jq '.tagName')"
+          fi
+
+          version="${requested_version#v}"
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*([.-][0-9A-Za-z]+)?$ ]]; then
+            echo "Invalid version: $requested_version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Download release assets and calculate hashes
+        id: hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          tag="${{ steps.version.outputs.tag }}"
+          base_url="https://github.com/$UPSTREAM_REPO/releases/download/$tag"
+          intel_asset="GitHub.Stars.Manager-$version.dmg"
+          arm_asset="GitHub.Stars.Manager-$version-arm64.dmg"
+
+          curl --fail --location --retry 3 --output "$intel_asset" "$base_url/$intel_asset"
+          curl --fail --location --retry 3 --output "$arm_asset" "$base_url/$arm_asset"
+
+          intel_sha="$(sha256sum "$intel_asset" | awk '{print $1}')"
+          arm_sha="$(sha256sum "$arm_asset" | awk '{print $1}')"
+
+          echo "intel_sha=$intel_sha" >> "$GITHUB_OUTPUT"
+          echo "arm_sha=$arm_sha" >> "$GITHUB_OUTPUT"
+
+      - name: Update cask
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          cask_file = ENV.fetch("CASK_FILE")
+          version = ENV.fetch("VERSION")
+          intel_sha = ENV.fetch("INTEL_SHA")
+          arm_sha = ENV.fetch("ARM_SHA")
+
+          def replace!(content, pattern, replacement)
+            abort("Could not update cask: pattern did not match #{pattern.inspect}") unless content.match?(pattern)
+            content.sub(pattern, replacement)
+          end
+
+          content = File.read(cask_file)
+          content = replace!(content, /version "[^"]+"/, %(version "#{version}"))
+          content = replace!(
+            content,
+            /(on_intel do.*?sha256 ")[0-9a-f]{64}(".*?end)/m,
+            "\\1#{intel_sha}\\2"
+          )
+          content = replace!(
+            content,
+            /(on_arm do.*?sha256 ")[0-9a-f]{64}(".*?end)/m,
+            "\\1#{arm_sha}\\2"
+          )
+
+          File.write(cask_file, content)
+          RUBY
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          INTEL_SHA: ${{ steps.hashes.outputs.intel_sha }}
+          ARM_SHA: ${{ steps.hashes.outputs.arm_sha }}
+
+      - name: Validate cask syntax
+        shell: bash
+        run: ruby -c "$CASK_FILE"
+
+      - name: Create pull request
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          branch="update/github-stars-manager-v$version"
+
+          if git diff --quiet; then
+            echo "Cask is already up to date for v$version."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add "$CASK_FILE"
+          git commit -m "Update github-stars-manager cask to v$version"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch"
+            remote_sha="$(git rev-parse "refs/remotes/origin/$branch")"
+            git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "HEAD:refs/heads/$branch"
+          else
+            git push origin "HEAD:refs/heads/$branch"
+          fi
+
+          if gh pr view "$branch" --json number --jq '.number' >/dev/null 2>&1; then
+            gh pr edit "$branch" \
+              --title "Update github-stars-manager cask to v$version" \
+              --body "Updates the GitHub Stars Manager cask to v$version and refreshes both Intel and Apple Silicon sha256 values."
+          else
+            gh pr create \
+              --base "${{ github.event.repository.default_branch }}" \
+              --head "$branch" \
+              --title "Update github-stars-manager cask to v$version" \
+              --body "Updates the GitHub Stars Manager cask to v$version and refreshes both Intel and Apple Silicon sha256 values."
+          fi

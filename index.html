@@ -98,6 +98,50 @@
         box-shadow: 4px 4px 0 var(--ink);
       }
 
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .language-toggle {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid var(--ink);
+        background: var(--panel-alt);
+        color: var(--ink);
+        font: inherit;
+        font-weight: 900;
+        cursor: pointer;
+        box-shadow: 3px 3px 0 var(--ink);
+        transition: transform 180ms ease, box-shadow 180ms ease;
+      }
+
+      .language-toggle:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 5px 5px 0 var(--ink);
+      }
+
+      .language-toggle span {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+      }
+
+      .language-toggle .active {
+        padding: 0 7px;
+        border-radius: 999px;
+        background: var(--ink);
+        color: #fff;
+      }
+
+      .language-toggle .divider {
+        color: var(--muted);
+      }
+
       .repo-link {
         display: inline-flex;
         align-items: center;
@@ -470,6 +514,11 @@
           flex-direction: column;
         }
 
+        .nav-actions {
+          width: 100%;
+          justify-content: flex-start;
+        }
+
         .hero-copy {
           padding-top: 22px;
         }
@@ -535,27 +584,34 @@
         <span class="mark-sign">tap</span>
         <span>homebrew-tap</span>
       </div>
-      <a class="repo-link" id="repoLink" href="https://github.com/wangre666/homebrew-tap">
-        <span>GitHub</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path
-            d="M14 4h6v6h-2V7.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V4ZM5 5h6v2H7v10h10v-4h2v6H5V5Z"
-            fill="currentColor"
-          />
-        </svg>
-      </a>
+      <div class="nav-actions">
+        <button class="language-toggle" type="button" id="languageToggle" aria-label="Switch language">
+          <span id="languageZh">中文</span>
+          <span class="divider">/</span>
+          <span id="languageEn">EN</span>
+        </button>
+        <a class="repo-link" id="repoLink" href="https://github.com/wangre666/homebrew-tap">
+          <span>GitHub</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M14 4h6v6h-2V7.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V4ZM5 5h6v2H7v10h10v-4h2v6H5V5Z"
+              fill="currentColor"
+            />
+          </svg>
+        </a>
+      </div>
     </header>
 
     <main>
       <section class="shell hero" aria-labelledby="pageTitle">
         <div class="hero-copy">
-          <p class="eyebrow">Homebrew Cask Registry</p>
+          <p class="eyebrow" id="eyebrowText">Homebrew Cask Registry</p>
           <h1 id="pageTitle">Tap Catalog</h1>
-          <p class="hero-text">
+          <p class="hero-text" id="heroText">
             当前仓库提供的软件、版本、安装命令和架构校验信息。
           </p>
           <div class="install-strip">
-            <span>Install</span>
+            <span data-label="install">Install</span>
             <code id="tapCommand">brew tap wangre666/tap</code>
             <button class="copy-button" type="button" id="copyTap" aria-label="Copy tap command">
               <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -570,15 +626,15 @@
 
         <aside class="stats-board" aria-label="Tap statistics">
           <div class="board-row">
-            <span class="board-label">Packages</span>
+            <span class="board-label" id="packagesLabel">Packages</span>
             <span class="board-value" id="packageCount">1</span>
           </div>
           <div class="board-row">
-            <span class="board-label">Casks</span>
+            <span class="board-label" id="casksLabel">Casks</span>
             <span class="board-value" id="caskCount">1</span>
           </div>
           <div class="board-row">
-            <span class="board-label">Latest</span>
+            <span class="board-label" id="latestLabel">Latest</span>
             <span class="board-value" id="updatedCount">0.5.5</span>
           </div>
         </aside>
@@ -605,6 +661,7 @@
           version: "0.5.5",
           name: "GitHub Stars Manager",
           desc: "AI-powered GitHub Stars organizer with semantic search and release tracking",
+          descZh: "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪",
           homepage: "https://github.com/AmintaCCCP/GithubStarsManager",
           app: "GitHub Stars Manager.app",
           architectures: [
@@ -628,12 +685,132 @@
         branch: "main",
       };
 
+      const I18N = {
+        zh: {
+          lang: "zh-CN",
+          documentTitle: "Homebrew Tap 目录",
+          languageLabel: "切换到英文",
+          eyebrow: "Homebrew Cask 注册表",
+          pageTitle: "Tap 目录",
+          heroText: "当前仓库提供的软件、版本、安装命令和架构校验信息。",
+          install: "安装",
+          packages: "软件包",
+          casks: "Casks",
+          latest: "最新版本",
+          catalogTitle: "可用软件",
+          snapshotStatus: "来自此仓库快照。",
+          liveStatus: (repo) => `实时读取自 ${repo.owner}/${repo.repo}。`,
+          footer: (repo) => `发布自 ${repo.owner}/${repo.repo}。`,
+          empty: "这个 tap 里还没有找到 cask。",
+          version: "版本",
+          artifact: "产物",
+          shaMissing: "未设置 sha256",
+          copyTap: "复制 tap 命令",
+          copyInstall: "复制安装命令",
+          copied: "已复制",
+          copyPrompt: "复制命令",
+          homepage: "主页",
+          cask: "Cask",
+          about:
+            "一个面向 macOS 用户的 Homebrew tap，用来发布和展示本仓库维护的软件 cask、版本、安装命令和校验信息。",
+        },
+        en: {
+          lang: "en",
+          documentTitle: "Homebrew Tap Catalog",
+          languageLabel: "Switch to Chinese",
+          eyebrow: "Homebrew Cask Registry",
+          pageTitle: "Tap Catalog",
+          heroText: "Software, versions, install commands, and architecture checksums from this tap.",
+          install: "Install",
+          packages: "Packages",
+          casks: "Casks",
+          latest: "Latest",
+          catalogTitle: "Available Software",
+          snapshotStatus: "Snapshot from this repository.",
+          liveStatus: (repo) => `Live from ${repo.owner}/${repo.repo}.`,
+          footer: (repo) => `Published from ${repo.owner}/${repo.repo}.`,
+          empty: "No casks found in this tap.",
+          version: "Version",
+          artifact: "Artifact",
+          shaMissing: "sha256 not set",
+          copyTap: "Copy tap command",
+          copyInstall: "Copy install command",
+          copied: "Copied",
+          copyPrompt: "Copy command",
+          homepage: "Homepage",
+          cask: "Cask",
+          about:
+            "A Homebrew tap for macOS users that publishes and showcases the casks, versions, install commands, and checksum metadata maintained in this repository.",
+        },
+      };
+
+      const LOCALIZED_DESCRIPTIONS = {
+        "github-stars-manager": {
+          zh: "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪",
+          en: "AI-powered GitHub Stars organizer with semantic search and release tracking",
+        },
+      };
+
       const grid = document.querySelector("#catalogGrid");
       const statusText = document.querySelector("#statusText");
       const repoLink = document.querySelector("#repoLink");
       const tapCommand = document.querySelector("#tapCommand");
       const copyTap = document.querySelector("#copyTap");
       const footerText = document.querySelector("#footerText");
+      const languageToggle = document.querySelector("#languageToggle");
+      const languageZh = document.querySelector("#languageZh");
+      const languageEn = document.querySelector("#languageEn");
+      const eyebrowText = document.querySelector("#eyebrowText");
+      const heroText = document.querySelector("#heroText");
+      const packagesLabel = document.querySelector("#packagesLabel");
+      const casksLabel = document.querySelector("#casksLabel");
+      const latestLabel = document.querySelector("#latestLabel");
+      const catalogTitle = document.querySelector("#catalogTitle");
+      const installLabels = document.querySelectorAll('[data-label="install"]');
+
+      let currentLocale = getInitialLocale();
+      let currentRepoInfo = DEFAULT_REPO;
+      let currentItems = SNAPSHOT;
+      let hasLiveData = false;
+
+      function t(key) {
+        return I18N[currentLocale][key];
+      }
+
+      function getInitialLocale() {
+        const queryLocale = new URLSearchParams(window.location.search).get("lang");
+        const savedLocale = window.localStorage.getItem("tapCatalogLocale");
+        const browserLocale = navigator.language?.toLowerCase().startsWith("zh") ? "zh" : "en";
+        if (queryLocale === "zh" || queryLocale === "en") return queryLocale;
+        if (savedLocale === "zh" || savedLocale === "en") return savedLocale;
+        return browserLocale;
+      }
+
+      function setLocale(locale) {
+        currentLocale = locale === "en" ? "en" : "zh";
+        window.localStorage.setItem("tapCatalogLocale", currentLocale);
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.set("lang", currentLocale);
+        window.history.replaceState({}, "", nextUrl);
+        document.documentElement.lang = t("lang");
+        document.title = t("documentTitle");
+        languageToggle.setAttribute("aria-label", t("languageLabel"));
+        languageZh.classList.toggle("active", currentLocale === "zh");
+        languageEn.classList.toggle("active", currentLocale === "en");
+        eyebrowText.textContent = t("eyebrow");
+        document.querySelector("#pageTitle").textContent = t("pageTitle");
+        heroText.textContent = t("heroText");
+        installLabels.forEach((label) => {
+          label.textContent = t("install");
+        });
+        packagesLabel.textContent = t("packages");
+        casksLabel.textContent = t("casks");
+        latestLabel.textContent = t("latest");
+        catalogTitle.textContent = t("catalogTitle");
+        statusText.textContent = hasLiveData ? t("liveStatus")(currentRepoInfo) : t("snapshotStatus");
+        copyTap.setAttribute("aria-label", t("copyTap"));
+        render(currentItems, currentRepoInfo);
+      }
 
       function escapeHtml(value) {
         return String(value ?? "").replace(/[&<>"']/g, (char) => {
@@ -654,6 +831,10 @@
           return { owner: hostMatch[1], repo: pathRepo, branch: DEFAULT_REPO.branch };
         }
         return DEFAULT_REPO;
+      }
+
+      function shouldLoadLiveCatalog() {
+        return window.location.hostname.endsWith(".github.io");
       }
 
       function interpolate(template, version) {
@@ -697,7 +878,17 @@
           }
         }
 
-        return { type: "cask", token, version, name, desc, homepage, app, architectures };
+        return {
+          type: "cask",
+          token,
+          version,
+          name,
+          desc,
+          descZh: LOCALIZED_DESCRIPTIONS[token]?.zh,
+          homepage,
+          app,
+          architectures,
+        };
       }
 
       async function loadFromGitHub(repoInfo) {
@@ -725,7 +916,7 @@
 
         repoLink.href = `https://github.com/${repoInfo.owner}/${repoInfo.repo}`;
         tapCommand.textContent = command;
-        footerText.textContent = `Published from ${repoInfo.owner}/${repoInfo.repo}.`;
+        footerText.textContent = t("footer")(repoInfo);
         document.querySelector("#packageCount").textContent = String(items.length);
         document.querySelector("#caskCount").textContent = String(
           items.filter((item) => item.type === "cask").length
@@ -737,7 +928,7 @@
         updateChrome(repoInfo, items);
 
         if (!items.length) {
-          grid.innerHTML = '<div class="empty">No casks found in this tap.</div>';
+          grid.innerHTML = `<div class="empty">${escapeHtml(t("empty"))}</div>`;
           return;
         }
 
@@ -747,12 +938,16 @@
               /^homebrew-/,
               ""
             )}/${item.token}`;
+            const localizedDesc =
+              currentLocale === "zh"
+                ? item.descZh || LOCALIZED_DESCRIPTIONS[item.token]?.zh || item.desc
+                : LOCALIZED_DESCRIPTIONS[item.token]?.en || item.desc;
             const archRows = item.architectures
               .map(
                 (arch) => `
                   <li title="${escapeHtml(arch.sha256)}">
                     <span class="chip">${escapeHtml(arch.name)}</span>
-                    <span class="sha">${escapeHtml(arch.sha256 || "sha256 not set")}</span>
+                    <span class="sha">${escapeHtml(arch.sha256 || t("shaMissing"))}</span>
                   </li>
                 `
               )
@@ -772,24 +967,24 @@
                     <p class="token">${escapeHtml(item.token)}</p>
                   </div>
                 </div>
-                <p class="desc">${escapeHtml(item.desc)}</p>
+                <p class="desc">${escapeHtml(localizedDesc)}</p>
                 <div class="meta">
                   <div class="meta-box">
-                    <b>Version</b>
+                    <b>${escapeHtml(t("version"))}</b>
                     <span>${escapeHtml(item.version)}</span>
                   </div>
                   <div class="meta-box">
-                    <b>Artifact</b>
+                    <b>${escapeHtml(t("artifact"))}</b>
                     <span>${escapeHtml(item.app || item.type)}</span>
                   </div>
                 </div>
                 <ul class="arch-list">${archRows}</ul>
                 <div class="install-strip">
-                  <span>Install</span>
+                  <span>${escapeHtml(t("install"))}</span>
                   <code>${escapeHtml(install)}</code>
                   <button class="copy-button package-copy" type="button" data-command="${escapeHtml(
                     install
-                  )}" aria-label="Copy install command">
+                  )}" aria-label="${escapeHtml(t("copyInstall"))}">
                     <svg viewBox="0 0 24 24" aria-hidden="true">
                       <path d="M8 7V5a3 3 0 0 1 3-3h7a3 3 0 0 1 3 3v7a3 3 0 0 1-3 3h-2v4a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h2Zm2 0h3a3 3 0 0 1 3 3v3h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v2Zm-4 2a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h7a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H6Z" fill="currentColor"/>
                     </svg>
@@ -800,7 +995,7 @@
                     item.homepage
                       ? `<a class="action-link" href="${escapeHtml(item.homepage)}">
                           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4h6v6h-2V7.41l-8.29 8.3-1.42-1.42 8.3-8.29H14V4ZM5 5h6v2H7v10h10v-4h2v6H5V5Z" fill="currentColor"/></svg>
-                          Homepage
+                          ${escapeHtml(t("homepage"))}
                         </a>`
                       : ""
                   }
@@ -808,9 +1003,9 @@
                     repoInfo.owner
                   )}/${escapeHtml(repoInfo.repo)}/blob/${escapeHtml(
               repoInfo.branch
-            )}/Casks/${escapeHtml(item.token)}.rb">
+                    )}/Casks/${escapeHtml(item.token)}.rb">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm-1 2.5L17.5 9H13V4.5ZM8 13h8v2H8v-2Zm0 4h8v2H8v-2Z" fill="currentColor"/></svg>
-                    Cask
+                    ${escapeHtml(t("cask"))}
                   </a>
                 </div>
               </article>
@@ -827,26 +1022,36 @@
         try {
           await navigator.clipboard.writeText(command);
           const previous = button.getAttribute("aria-label");
-          button.setAttribute("aria-label", "Copied");
+          button.setAttribute("aria-label", t("copied"));
           setTimeout(() => button.setAttribute("aria-label", previous), 1200);
         } catch {
-          window.prompt("Copy command", command);
+          window.prompt(t("copyPrompt"), command);
         }
       }
 
       copyTap.addEventListener("click", () => copyCommand(tapCommand.textContent, copyTap));
+      languageToggle.addEventListener("click", () => {
+        setLocale(currentLocale === "zh" ? "en" : "zh");
+      });
 
       async function boot() {
         const repoInfo = detectRepo();
-        render(SNAPSHOT, repoInfo);
+        currentRepoInfo = repoInfo;
+        currentItems = SNAPSHOT;
+        hasLiveData = false;
+        setLocale(currentLocale);
+
+        if (!shouldLoadLiveCatalog()) return;
 
         try {
           const liveItems = await loadFromGitHub(repoInfo);
-          render(liveItems, repoInfo);
-          statusText.textContent = `Live from ${repoInfo.owner}/${repoInfo.repo}.`;
+          currentItems = liveItems;
+          hasLiveData = true;
+          render(currentItems, currentRepoInfo);
+          statusText.textContent = t("liveStatus")(repoInfo);
         } catch (error) {
-          statusText.textContent = "Snapshot from this repository.";
-          console.warn(error);
+          hasLiveData = false;
+          statusText.textContent = t("snapshotStatus");
         }
       }
 

@@ -1,5 +1,12 @@
 # homebrew-tap
 
+## About
+
+This repository is a Homebrew tap for macOS apps maintained by wangre666. It
+currently publishes the GitHub Stars Manager cask and provides a GitHub Pages
+catalog with versions, install commands, upstream links, and architecture
+checksums.
+
 ## GitHub Pages
 
 This repository includes a static catalog page at `index.html`. To publish it

@@ -1,6 +1,8 @@
 name: Update GitHub Stars Manager cask
 
 on:
+  schedule:
+    - cron: "0 8 * * *"
   workflow_dispatch:
     inputs:
       version:
@@ -10,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   update-cask:
@@ -43,8 +46,26 @@ jobs:
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"
 
+      - name: Check if update is needed
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version="$(grep -m1 'version "' "$CASK_FILE" | sed 's/.*version "\(.*\)"/\1/')"
+          upstream_version="${{ steps.version.outputs.version }}"
+
+          if [[ "$current_version" == "$upstream_version" ]]; then
+            echo "Cask is already up to date (v$current_version)."
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Update needed: v$current_version -> v$upstream_version"
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Download release assets and calculate hashes
         id: hashes
+        if: steps.check.outputs.needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -65,6 +86,7 @@ jobs:
           echo "arm_sha=$arm_sha" >> "$GITHUB_OUTPUT"
 
       - name: Update cask
+        if: steps.check.outputs.needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -101,21 +123,18 @@ jobs:
           ARM_SHA: ${{ steps.hashes.outputs.arm_sha }}
 
       - name: Validate cask syntax
+        if: steps.check.outputs.needed == 'true'
         shell: bash
         run: ruby -c "$CASK_FILE"
 
-      - name: Push update branch
+      - name: Push update branch and open PR
+        if: steps.check.outputs.needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
 
           version="${{ steps.version.outputs.version }}"
           branch="update/github-stars-manager-v$version"
-
-          if git diff --quiet; then
-            echo "Cask is already up to date for v$version."
-            exit 0
-          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -129,4 +148,15 @@ jobs:
             git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "HEAD:refs/heads/$branch"
           else
             git push origin "HEAD:refs/heads/$branch"
+          fi
+
+          if gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --json number --jq '.[0].number' | grep -q '^[0-9]'; then
+            echo "PR already exists for $branch, skipping."
+          else
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$branch" \
+              --title "Update github-stars-manager cask to v$version" \
+              --body "Updates the GitHub Stars Manager cask to v$version and refreshes both Intel and Apple Silicon sha256 values."
           fi

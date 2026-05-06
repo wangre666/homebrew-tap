@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CASK_FILE: Casks/github-stars-manager.rb
+      INDEX_FILE: index.html
       UPSTREAM_REPO: AmintaCCCP/GithubStarsManager
       GH_TOKEN: ${{ github.token }}
 
@@ -127,6 +128,92 @@ jobs:
         shell: bash
         run: ruby -c "$CASK_FILE"
 
+      - name: Update HTML catalog snapshot
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          require "json"
+
+          index_file = ENV.fetch("INDEX_FILE")
+          localized_descriptions = {
+            "github-stars-manager" => {
+              "zh" => "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪",
+            },
+          }
+
+          def interpolate(template, version)
+            template
+              .gsub('#{version}', version)
+              .gsub('v#{version}', "v#{version}")
+          end
+
+          def parse_cask(path, localized_descriptions)
+            source = File.read(path)
+            token = source[/cask\s+"([^"]+)"/, 1]
+            abort("Could not parse cask token from #{path}") unless token
+
+            version = source[/version\s+"([^"]+)"/, 1] || "unknown"
+            architectures = source.scan(/on_(intel|arm)\s+do([\s\S]*?)\n\s*end/).map do |arch, block|
+              url = block[/url\s+"([^"]+)"/, 1] || ""
+              sha256 = block[/sha256\s+"([^"]+)"/, 1] || ""
+
+              {
+                "name" => arch == "arm" ? "Apple Silicon" : "Intel",
+                "url" => interpolate(url, version),
+                "sha256" => sha256,
+              }
+            end
+
+            if architectures.empty?
+              url = source[/\n\s*url\s+"([^"]+)"/, 1] || ""
+              sha256 = source[/\n\s*sha256\s+"([^"]+)"/, 1] || ""
+              architectures << {
+                "name" => "Universal",
+                "url" => interpolate(url, version),
+                "sha256" => sha256,
+              } if !url.empty? || !sha256.empty?
+            end
+
+            item = {
+              "type" => "cask",
+              "token" => token,
+              "version" => version,
+              "name" => source[/\n\s*name\s+"([^"]+)"/, 1] || token,
+              "desc" => source[/\n\s*desc\s+"([^"]+)"/, 1] || "",
+              "homepage" => source[/\n\s*homepage\s+"([^"]+)"/, 1] || "",
+              "app" => source[/\n\s*app\s+"([^"]+)"/, 1] || "",
+              "architectures" => architectures,
+            }
+
+            desc_zh = localized_descriptions.dig(token, "zh")
+            item["descZh"] = desc_zh if desc_zh
+            item
+          end
+
+          snapshot = Dir["Casks/*.rb"]
+            .map { |path| parse_cask(path, localized_descriptions) }
+            .sort_by { |item| item.fetch("token") }
+          latest = snapshot.find { |item| item["version"] && item["version"] != "unknown" }&.fetch("version", nil) || "-"
+
+          content = File.read(index_file)
+          snapshot_js = "      const SNAPSHOT = #{JSON.pretty_generate(snapshot).gsub(/^/, '      ').sub(/\A\s+/, '')};"
+
+          unless content.match?(/      const SNAPSHOT = \[\n.*?\n      \];/m)
+            abort("Could not update HTML catalog: SNAPSHOT block was not found")
+          end
+
+          content = content.sub(/      const SNAPSHOT = \[\n.*?\n      \];/m, snapshot_js)
+          content = content.sub(
+            /(<span class="board-value" id="updatedCount">)[^<]*(<\/span>)/,
+            "\\1#{latest}\\2"
+          )
+
+          File.write(index_file, content)
+          RUBY
+
       - name: Push update branch and open PR
         if: steps.check.outputs.needed == 'true'
         shell: bash
@@ -139,8 +226,8 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --create "$branch"
-          git add "$CASK_FILE"
-          git commit -m "Update github-stars-manager cask to v$version"
+          git add "$CASK_FILE" "$INDEX_FILE"
+          git commit -m "Update github-stars-manager cask and catalog to v$version"
 
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch"
@@ -158,5 +245,5 @@ jobs:
               --base main \
               --head "$branch" \
               --title "Update github-stars-manager cask to v$version" \
-              --body "Updates the GitHub Stars Manager cask to v$version and refreshes both Intel and Apple Silicon sha256 values."
+              --body "Updates the GitHub Stars Manager cask to v$version, refreshes both Intel and Apple Silicon sha256 values, and updates the GitHub Pages catalog snapshot."
           fi

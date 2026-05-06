@@ -1,6 +1,6 @@
 # Agent workflow
 
-This repository's update action resolves the upstream GitHub Stars Manager release, refreshes the cask, validates the Ruby syntax, pushes an update branch, and opens a pull request automatically.
+This repository's update action resolves the upstream GitHub Stars Manager release, refreshes the cask and HTML catalog snapshot, validates the Ruby syntax, pushes an update branch, and opens a pull request automatically.
 
 The workflow runs daily at 08:00 UTC via schedule, and can also be triggered manually via `workflow_dispatch`.
 

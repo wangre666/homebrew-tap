@@ -1,21 +1,25 @@
 cask "kiro-account-manager" do
-  version "1.8.6"
+  version "1.8.5"
 
-  url "https://github.com/hj01857655/kiro-account-manager/releases/download/v#{version}/KiroAccountManager_#{version}_x64.dmg"
-  sha256 "446c0043be7d85d9557d10989a5784dbedf4c1d4132354809857c39ec4e240d9"
+  on_intel do
+    url "https://github.com/hj01857655/kiro-account-manager/releases/download/v#{version}/KiroAccountManager_#{version}_x64.dmg"
+    sha256 "f90aa3cc5c9abb61b6ecf76e0d2225f8e9a9e5885d73899dafb3d3a80bb0c820"
+  end
+
+  on_arm do
+    url "https://github.com/hj01857655/kiro-account-manager/releases/download/v#{version}/KiroAccountManager_#{version}_aarch64.dmg"
+    sha256 "fdd1d08d72a813f961915c137d29fd20e75ebabf80f25c38005b34a3cde76521"
+  end
 
   name "Kiro Account Manager"
   desc "Manage Kiro IDE accounts, account switching, and quota monitoring"
   homepage "https://github.com/hj01857655/kiro-account-manager"
 
   depends_on macos: ">= :catalina"
-  depends_on arch: :x86_64
 
   app "KiroAccountManager.app"
 
   caveats <<~EOS
-    Upstream currently publishes only a macOS x64 build for this release.
-
     If macOS reports that the app is damaged, remove the quarantine attribute:
 
       xattr -dr com.apple.quarantine "/Applications/KiroAccountManager.app"

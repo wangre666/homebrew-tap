@@ -29,7 +29,8 @@ Use the app-specific GitHub Actions workflows to refresh casks and the
 - `Update GitHub Stars Manager cask` refreshes
   `Casks/github-stars-manager.rb`.
 - `Update Kiro Account Manager cask` refreshes
-  `Casks/kiro-account-manager.rb`.
+  `Casks/kiro-account-manager.rb`. When `version` is empty, it uses the latest
+  release that includes both macOS x64 and aarch64 DMG assets.
 
 Each workflow downloads the expected upstream DMG asset or assets, recalculates
 the `sha256` values, updates the cask and catalog page, and opens a pull

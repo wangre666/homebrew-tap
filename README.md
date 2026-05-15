@@ -3,9 +3,9 @@
 ## About
 
 This repository is a Homebrew tap for macOS apps maintained by wangre666. It
-currently publishes the GitHub Stars Manager cask and provides a GitHub Pages
-catalog with versions, install commands, upstream links, and architecture
-checksums.
+currently publishes casks for GitHub Stars Manager and Kiro Account Manager, and
+provides a GitHub Pages catalog with versions, install commands, upstream links,
+and architecture checksums.
 
 ## GitHub Pages
 
@@ -20,11 +20,17 @@ when served from GitHub Pages.
 
 ## Update casks
 
-Use the `Update GitHub Stars Manager cask` GitHub Actions workflow to refresh
-`Casks/github-stars-manager.rb` and the `index.html` catalog snapshot.
+Use the app-specific GitHub Actions workflows to refresh casks and the
+`index.html` catalog snapshot.
 
 - Leave `version` empty to use the latest upstream GitHub release.
 - Set `version` to a specific value, such as `0.5.4`, to update to that release.
 
-The workflow downloads both Intel and Apple Silicon DMG assets, recalculates the
-`sha256` values, updates the cask and catalog page, and opens a pull request.
+- `Update GitHub Stars Manager cask` refreshes
+  `Casks/github-stars-manager.rb`.
+- `Update Kiro Account Manager cask` refreshes
+  `Casks/kiro-account-manager.rb`.
+
+Each workflow downloads the expected upstream DMG asset or assets, recalculates
+the `sha256` values, updates the cask and catalog page, and opens a pull
+request.

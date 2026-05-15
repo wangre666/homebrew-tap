@@ -627,15 +627,15 @@
         <aside class="stats-board" aria-label="Tap statistics">
           <div class="board-row">
             <span class="board-label" id="packagesLabel">Packages</span>
-            <span class="board-value" id="packageCount">1</span>
+            <span class="board-value" id="packageCount">2</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="casksLabel">Casks</span>
-            <span class="board-value" id="caskCount">1</span>
+            <span class="board-value" id="caskCount">2</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="latestLabel">Latest</span>
-            <span class="board-value" id="updatedCount">0.5.8</span>
+            <span class="board-value" id="updatedCount">1.8.6</span>
           </div>
         </aside>
       </section>
@@ -676,6 +676,23 @@
             }
           ],
           "descZh": "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪"
+        },
+        {
+          "type": "cask",
+          "token": "kiro-account-manager",
+          "version": "1.8.6",
+          "name": "Kiro Account Manager",
+          "desc": "Manage Kiro IDE accounts, account switching, and quota monitoring",
+          "homepage": "https://github.com/hj01857655/kiro-account-manager",
+          "app": "KiroAccountManager.app",
+          "architectures": [
+            {
+              "name": "Intel",
+              "url": "https://github.com/hj01857655/kiro-account-manager/releases/download/v1.8.6/KiroAccountManager_1.8.6_x64.dmg",
+              "sha256": "446c0043be7d85d9557d10989a5784dbedf4c1d4132354809857c39ec4e240d9"
+            }
+          ],
+          "descZh": "Kiro IDE 账号管理工具，支持多账号切换和配额监控"
         }
       ];
 
@@ -748,6 +765,10 @@
         "github-stars-manager": {
           zh: "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪",
           en: "AI-powered GitHub Stars organizer with semantic search and release tracking",
+        },
+        "kiro-account-manager": {
+          zh: "Kiro IDE 账号管理工具，支持多账号切换和配额监控",
+          en: "Manage Kiro IDE accounts, account switching, and quota monitoring",
         },
       };
 
@@ -843,6 +864,42 @@
           .replaceAll("v#{version}", `v${version}`);
       }
 
+      function architectureNameForSource(source, url) {
+        const archDependency = source.match(/depends_on\s+arch:\s*:([a-z0-9_]+)/)?.[1];
+        if (archDependency === "arm64") return "Apple Silicon";
+        if (archDependency === "intel" || archDependency === "x86_64") return "Intel";
+        if (/[._-](arm64|aarch64)([._-]|$)/i.test(url)) return "Apple Silicon";
+        if (/[._-](x64|x86_64|amd64)([._-]|$)/i.test(url)) return "Intel";
+        return "Universal";
+      }
+
+      function compareVersions(left, right) {
+        const leftParts = String(left).split(/[.-]/);
+        const rightParts = String(right).split(/[.-]/);
+        const length = Math.max(leftParts.length, rightParts.length);
+
+        for (let index = 0; index < length; index += 1) {
+          const leftPart = leftParts[index] ?? "0";
+          const rightPart = rightParts[index] ?? "0";
+          const leftNumber = Number(leftPart);
+          const rightNumber = Number(rightPart);
+          const numeric = Number.isInteger(leftNumber) && Number.isInteger(rightNumber);
+
+          if (numeric && leftNumber !== rightNumber) return leftNumber - rightNumber;
+          if (!numeric && leftPart !== rightPart) return leftPart.localeCompare(rightPart);
+        }
+
+        return 0;
+      }
+
+      function newestVersion(items) {
+        return items
+          .map((item) => item.version)
+          .filter((version) => version && version !== "unknown")
+          .sort(compareVersions)
+          .at(-1) ?? "-";
+      }
+
       function parseCask(source) {
         const token = source.match(/cask\s+"([^"]+)"/)?.[1];
         if (!token) return null;
@@ -870,9 +927,10 @@
           const url = source.match(/\n\s*url\s+"([^"]+)"/)?.[1] ?? "";
           const sha256 = source.match(/\n\s*sha256\s+"([^"]+)"/)?.[1] ?? "";
           if (url || sha256) {
+            const interpolatedUrl = interpolate(url, version);
             architectures.push({
-              name: "Universal",
-              url: interpolate(url, version),
+              name: architectureNameForSource(source, interpolatedUrl),
+              url: interpolatedUrl,
               sha256,
             });
           }
@@ -912,7 +970,7 @@
       function updateChrome(repoInfo, items) {
         const tap = repoInfo.repo.replace(/^homebrew-/, "");
         const command = `brew tap ${repoInfo.owner}/${tap}`;
-        const newest = items.find((item) => item.version && item.version !== "unknown")?.version ?? "-";
+        const newest = newestVersion(items);
 
         repoLink.href = `https://github.com/${repoInfo.owner}/${repoInfo.repo}`;
         tapCommand.textContent = command;

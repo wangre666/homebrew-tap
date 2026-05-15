@@ -1,8 +1,8 @@
 # Agent workflow
 
-This repository's update action resolves the upstream GitHub Stars Manager release, refreshes the cask and HTML catalog snapshot, validates the Ruby syntax, pushes an update branch, and opens a pull request automatically.
+This repository's update actions resolve upstream app releases, refresh the target cask and HTML catalog snapshot, validate the Ruby syntax, push an update branch, and open a pull request automatically.
 
-The workflow runs daily at 08:00 UTC via schedule, and can also be triggered manually via `workflow_dispatch`.
+The workflows run daily via schedule, and can also be triggered manually via `workflow_dispatch`.
 
 Agent workflow (for manual intervention or debugging):
 
@@ -10,6 +10,7 @@ Agent workflow (for manual intervention or debugging):
 
    ```sh
    gh workflow run update-github-stars-manager-cask.yml --repo wangre666/homebrew-tap
+   gh workflow run update-kiro-account-manager-cask.yml --repo wangre666/homebrew-tap
    ```
 
 2. Check the workflow run result and logs:

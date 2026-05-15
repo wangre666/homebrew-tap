@@ -1,12 +1,12 @@
-name: Update GitHub Stars Manager cask
+name: Update Kiro Account Manager cask
 
 on:
   schedule:
-    - cron: "0 8 * * *"
+    - cron: "15 8 * * *"
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version to publish, for example 0.5.4. Leave empty to use the latest GitHub release."
+        description: "Release version to publish, for example 1.8.6. Leave empty to use the latest GitHub release."
         required: false
         type: string
 
@@ -18,9 +18,9 @@ jobs:
   update-cask:
     runs-on: ubuntu-latest
     env:
-      CASK_FILE: Casks/github-stars-manager.rb
+      CASK_FILE: Casks/kiro-account-manager.rb
       INDEX_FILE: index.html
-      UPSTREAM_REPO: AmintaCCCP/GithubStarsManager
+      UPSTREAM_REPO: hj01857655/kiro-account-manager
       GH_TOKEN: ${{ github.token }}
 
     steps:
@@ -64,7 +64,7 @@ jobs:
             echo "needed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Download release assets and calculate hashes
+      - name: Download release asset and calculate hash
         id: hashes
         if: steps.check.outputs.needed == 'true'
         shell: bash
@@ -74,17 +74,13 @@ jobs:
           version="${{ steps.version.outputs.version }}"
           tag="${{ steps.version.outputs.tag }}"
           base_url="https://github.com/$UPSTREAM_REPO/releases/download/$tag"
-          intel_asset="GitHub.Stars.Manager-$version.dmg"
-          arm_asset="GitHub.Stars.Manager-$version-arm64.dmg"
+          intel_asset="KiroAccountManager_${version}_x64.dmg"
 
           curl --fail --location --retry 3 --output "$intel_asset" "$base_url/$intel_asset"
-          curl --fail --location --retry 3 --output "$arm_asset" "$base_url/$arm_asset"
 
           intel_sha="$(sha256sum "$intel_asset" | awk '{print $1}')"
-          arm_sha="$(sha256sum "$arm_asset" | awk '{print $1}')"
 
           echo "intel_sha=$intel_sha" >> "$GITHUB_OUTPUT"
-          echo "arm_sha=$arm_sha" >> "$GITHUB_OUTPUT"
 
       - name: Update cask
         if: steps.check.outputs.needed == 'true'
@@ -96,7 +92,6 @@ jobs:
           cask_file = ENV.fetch("CASK_FILE")
           version = ENV.fetch("VERSION")
           intel_sha = ENV.fetch("INTEL_SHA")
-          arm_sha = ENV.fetch("ARM_SHA")
 
           def replace!(content, pattern, replacement)
             abort("Could not update cask: pattern did not match #{pattern.inspect}") unless content.match?(pattern)
@@ -105,23 +100,13 @@ jobs:
 
           content = File.read(cask_file)
           content = replace!(content, /version "[^"]+"/, %(version "#{version}"))
-          content = replace!(
-            content,
-            /(on_intel do.*?sha256 ")[0-9a-f]{64}(".*?end)/m,
-            "\\1#{intel_sha}\\2"
-          )
-          content = replace!(
-            content,
-            /(on_arm do.*?sha256 ")[0-9a-f]{64}(".*?end)/m,
-            "\\1#{arm_sha}\\2"
-          )
+          content = replace!(content, /sha256 "[0-9a-f]{64}"/, %(sha256 "#{intel_sha}"))
 
           File.write(cask_file, content)
           RUBY
         env:
           VERSION: ${{ steps.version.outputs.version }}
           INTEL_SHA: ${{ steps.hashes.outputs.intel_sha }}
-          ARM_SHA: ${{ steps.hashes.outputs.arm_sha }}
 
       - name: Validate cask syntax
         if: steps.check.outputs.needed == 'true'
@@ -243,13 +228,13 @@ jobs:
           set -euo pipefail
 
           version="${{ steps.version.outputs.version }}"
-          branch="update/github-stars-manager-v$version"
+          branch="update/kiro-account-manager-v$version"
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch --create "$branch"
           git add "$CASK_FILE" "$INDEX_FILE"
-          git commit -m "Update github-stars-manager cask and catalog to v$version"
+          git commit -m "Update kiro-account-manager cask and catalog to v$version"
 
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch"
@@ -266,6 +251,6 @@ jobs:
               --repo "$GITHUB_REPOSITORY" \
               --base main \
               --head "$branch" \
-              --title "Update github-stars-manager cask to v$version" \
-              --body "Updates the GitHub Stars Manager cask to v$version, refreshes both Intel and Apple Silicon sha256 values, and updates the GitHub Pages catalog snapshot."
+              --title "Update kiro-account-manager cask to v$version" \
+              --body "Updates the Kiro Account Manager cask to v$version, refreshes the macOS x64 sha256 value, and updates the GitHub Pages catalog snapshot."
           fi

@@ -19,11 +19,10 @@ cask "kiro-account-manager" do
 
   app "KiroAccountManager.app"
 
-  caveats <<~EOS
-    如果更新后软件不可用，或 macOS 提示应用已损坏/无法打开，请运行：
-
-      xattr -dr com.apple.quarantine "/Applications/KiroAccountManager.app"
-  EOS
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/KiroAccountManager.app"]
+  end
 
   zap trash: [
     "~/Library/Application Support/com.kiro.account-manager",

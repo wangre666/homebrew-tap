@@ -20,11 +20,9 @@ cask "kiro-account-manager" do
   app "KiroAccountManager.app"
 
   caveats <<~EOS
-    If macOS reports that the app is damaged, remove the quarantine attribute:
+    如果更新后软件不可用，或 macOS 提示应用已损坏/无法打开，请运行：
 
       xattr -dr com.apple.quarantine "/Applications/KiroAccountManager.app"
-
-    This is caused by the upstream app signature/notarization state, not by Homebrew.
   EOS
 
   zap trash: [

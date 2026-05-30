@@ -145,6 +145,9 @@ jobs:
             "kiro-account-manager" => {
               "zh" => "Kiro IDE 账号管理工具，支持多账号切换和配额监控",
             },
+            "shandianshuo" => {
+              "zh" => "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
+            },
           }
 
           def interpolate(template, version)

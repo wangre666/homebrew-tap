@@ -627,11 +627,11 @@
         <aside class="stats-board" aria-label="Tap statistics">
           <div class="board-row">
             <span class="board-label" id="packagesLabel">Packages</span>
-            <span class="board-value" id="packageCount">2</span>
+            <span class="board-value" id="packageCount">4</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="casksLabel">Casks</span>
-            <span class="board-value" id="caskCount">2</span>
+            <span class="board-value" id="caskCount">4</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="latestLabel">Latest</span>
@@ -715,6 +715,28 @@
             }
           ],
           "descZh": "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作"
+        },
+        {
+          "type": "cask",
+          "token": "tiez-clipboard",
+          "version": "0.1.3",
+          "name": "TieZ",
+          "desc": "Cross-platform clipboard manager with history, tags, sync and privacy protection",
+          "homepage": "https://github.com/jimuzhe/tiez-clipboard",
+          "app": "TieZ.app",
+          "architectures": [
+            {
+              "name": "Intel",
+              "url": "https://github.com/jimuzhe/tiez-clipboard/releases/download/mac-v0.1.3/TieZ_0.1.3_x64.dmg",
+              "sha256": "8b99d930010fe3a98cc1dbdbbdef0e2f74db04a1be038a5796e7238469a2b2a3"
+            },
+            {
+              "name": "Apple Silicon",
+              "url": "https://github.com/jimuzhe/tiez-clipboard/releases/download/mac-v0.1.3/TieZ_0.1.3_aarch64.dmg",
+              "sha256": "054093aac9da246a3c6782300b70e120f5bd33bc8327df304b0b5ec5f4ab6c6d"
+            }
+          ],
+          "descZh": "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护"
         }
       ];
 
@@ -795,6 +817,10 @@
         "shandianshuo": {
           zh: "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
           en: "AI voice assistant for fast input, replies and editing via voice commands",
+        },
+        "tiez-clipboard": {
+          zh: "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护",
+          en: "Cross-platform clipboard manager with history, tags, sync and privacy protection",
         },
       };
 

@@ -137,6 +137,9 @@ jobs:
             "shandianshuo" => {
               "zh" => "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
             },
+            "tiez-clipboard" => {
+              "zh" => "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护",
+            },
           }
 
           def interpolate(template, version)

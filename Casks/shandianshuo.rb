@@ -1,6 +1,6 @@
 cask "shandianshuo" do
-  version "0.7.1"
-  sha256 "7c07f47919800120d6b2aae1879bddbfe1bf67299db4487fd27accfa8abdf940"
+  version "0.7.8"
+  sha256 "ad99825e9ec02c277653dfced3db95ea0167afb1244e50fe400fe0689263609e"
 
   url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_universal.dmg"
   name "闪电说"

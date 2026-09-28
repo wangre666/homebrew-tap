@@ -17,9 +17,9 @@ cask "github-stars-manager" do
 
   app "GitHub Stars Manager.app"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/GitHub Stars Manager.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{appdir}}/GitHub Stars Manager.app"]
   end
 
   zap trash: [

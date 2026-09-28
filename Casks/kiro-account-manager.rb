@@ -15,13 +15,11 @@ cask "kiro-account-manager" do
   desc "Manage Kiro IDE accounts, account switching, and quota monitoring"
   homepage "https://github.com/hj01857655/kiro-account-manager"
 
-  depends_on macos: ">= :catalina"
-
   app "KiroAccountManager.app"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/KiroAccountManager.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{appdir}}/KiroAccountManager.app"]
   end
 
   zap trash: [

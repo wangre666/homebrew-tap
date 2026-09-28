@@ -15,13 +15,11 @@ cask "tiez-clipboard" do
   desc "Cross-platform clipboard manager with history, tags, sync and privacy protection"
   homepage "https://github.com/jimuzhe/tiez-clipboard"
 
-  depends_on macos: ">= :catalina"
-
   app "TieZ.app"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/TieZ.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{appdir}}/TieZ.app"]
   end
 
   zap trash: [

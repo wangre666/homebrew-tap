@@ -7,13 +7,11 @@ cask "shandianshuo" do
   desc "AI voice assistant for fast input, replies and editing via voice commands"
   homepage "https://shandianshuo.cn/"
 
-  depends_on macos: ">= :catalina"
-
   app "闪电说.app"
 
-  postflight do
-    system_command "/usr/bin/xattr",
-                   args: ["-dr", "com.apple.quarantine", "#{appdir}/闪电说.app"]
+  postflight_steps do
+    run "/usr/bin/xattr",
+        args: ["-dr", "com.apple.quarantine", "{{appdir}}/闪电说.app"]
   end
 
   zap trash: [

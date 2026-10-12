@@ -1,8 +1,16 @@
 cask "shandianshuo" do
-  version "0.7.8"
-  sha256 "ad99825e9ec02c277653dfced3db95ea0167afb1244e50fe400fe0689263609e"
+  version "0.8.0"
 
-  url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_universal.dmg"
+  on_arm do
+    url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_arm64.dmg"
+    sha256 "cc1ab56878bfe610d588e1bea7e1ce9c34a33d9a4e75f0b962dadc995f4d0343"
+  end
+
+  on_intel do
+    url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_x64.dmg"
+    sha256 "d84de98062ff70ca97ca0aa87298af54268666d479c295d1c4eb471599fe972b"
+  end
+
   name "闪电说"
   desc "AI voice assistant for fast input, replies and editing via voice commands"
   homepage "https://shandianshuo.cn/"

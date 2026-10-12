@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Release version to publish, for example 0.6.9. Leave empty to use the latest stable GitHub release."
+        description: "Release version to publish, for example 0.8.0. Leave empty to use the latest stable GitHub release."
         required: false
         type: string
 
@@ -78,13 +78,12 @@ jobs:
           version="${{ steps.version.outputs.version }}"
           tag="${{ steps.version.outputs.tag }}"
           base_url="https://github.com/$UPSTREAM_REPO/releases/download/$tag"
-          asset="shandianshuo_${version}_universal.dmg"
-
-          curl --fail --location --retry 3 --output "$asset" "$base_url/$asset"
-
-          sha="$(sha256sum "$asset" | awk '{print $1}')"
-
-          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          for arch in arm64 x64; do
+            asset="shandianshuo_${version}_${arch}.dmg"
+            curl --fail --location --retry 3 --output "$asset" "$base_url/$asset"
+            sha="$(sha256sum "$asset" | awk '{print $1}')"
+            echo "sha_${arch}=$sha" >> "$GITHUB_OUTPUT"
+          done
 
       - name: Update cask
         if: steps.check.outputs.needed == 'true'
@@ -95,7 +94,7 @@ jobs:
           ruby <<'RUBY'
           cask_file = ENV.fetch("CASK_FILE")
           version = ENV.fetch("VERSION")
-          sha = ENV.fetch("SHA")
+          hashes = { "arm" => ENV.fetch("SHA_ARM64"), "intel" => ENV.fetch("SHA_X64") }
 
           def replace!(content, pattern, replacement)
             abort("Could not update cask: pattern did not match #{pattern.inspect}") unless content.match?(pattern)
@@ -104,13 +103,22 @@ jobs:
 
           content = File.read(cask_file)
           content = replace!(content, /version "[^"]+"/, %(version "#{version}"))
-          content = replace!(content, /sha256 "[0-9a-f]{64}"/, %(sha256 "#{sha}"))
+          hashes.each do |arch, sha|
+            abort("Invalid SHA256 for #{arch}") unless sha.match?(/\A[0-9a-f]{64}\z/)
+            pattern = /(on_#{arch} do\n)(.*?)(\n  end)/m
+            abort("Missing architecture block: #{arch}") unless content.match?(pattern)
+            content = content.sub(pattern) do
+              opening, body, closing = $1, $2, $3
+              opening + replace!(body, /sha256 "[0-9a-f]{64}"/, %(sha256 "#{sha}")) + closing
+            end
+          end
 
           File.write(cask_file, content)
           RUBY
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          SHA: ${{ steps.hashes.outputs.sha }}
+          SHA_ARM64: ${{ steps.hashes.outputs.sha_arm64 }}
+          SHA_X64: ${{ steps.hashes.outputs.sha_x64 }}
 
       - name: Validate cask syntax
         if: steps.check.outputs.needed == 'true'

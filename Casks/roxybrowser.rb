@@ -1,4 +1,6 @@
 cask "roxybrowser" do
+  arch arm: "apple", intel: "intel"
+
   version "4.0.7"
 
   on_arm do
@@ -17,7 +19,7 @@ cask "roxybrowser" do
 
   depends_on macos: :monterey
 
-  pkg "RoxyBrowser_*.pkg"
+  pkg "RoxyBrowser_#{arch}_#{version}.pkg"
 
   uninstall pkgutil: "com.roxybrowser.app"
 end

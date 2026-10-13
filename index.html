@@ -627,15 +627,15 @@
         <aside class="stats-board" aria-label="Tap statistics">
           <div class="board-row">
             <span class="board-label" id="packagesLabel">Packages</span>
-            <span class="board-value" id="packageCount">4</span>
+            <span class="board-value" id="packageCount">5</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="casksLabel">Casks</span>
-            <span class="board-value" id="caskCount">4</span>
+            <span class="board-value" id="caskCount">5</span>
           </div>
           <div class="board-row">
             <span class="board-label" id="latestLabel">Latest</span>
-            <span class="board-value" id="updatedCount">1.9.2</span>
+            <span class="board-value" id="updatedCount">4.0.7</span>
           </div>
         </aside>
       </section>
@@ -698,6 +698,28 @@
             }
           ],
           "descZh": "Kiro IDE 账号管理工具，支持多账号切换和配额监控"
+        },
+        {
+          "type": "cask",
+          "token": "roxybrowser",
+          "version": "4.0.7",
+          "name": "RoxyBrowser",
+          "desc": "Browser with isolated profiles for managing multiple accounts",
+          "homepage": "https://roxybrowser.com/",
+          "app": "RoxyBrowser_*.pkg",
+          "architectures": [
+            {
+              "name": "Apple Silicon",
+              "url": "https://sgp1.vultrobjects.com/roxybrowseross/private/package/app/macOS/apple/4.0.7/RoxyBrowser_apple_4.0.7.pkg",
+              "sha256": "773208628a5be6282d7e5684dfdcee5e82525965d3c7fbbec38c3d6956ec9dee"
+            },
+            {
+              "name": "Intel",
+              "url": "https://sgp1.vultrobjects.com/roxybrowseross/private/package/app/macOS/intel/4.0.7/RoxyBrowser_intel_4.0.7.pkg",
+              "sha256": "759eefb7c7e1d77fec4fe0f661e3d47249face5434f70efa847089279dad3f4a"
+            }
+          ],
+          "descZh": "支持独立浏览器环境与多账号管理的浏览器"
         },
         {
           "type": "cask",
@@ -822,6 +844,10 @@
         "shandianshuo": {
           zh: "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
           en: "AI voice assistant for fast input, replies and editing via voice commands",
+        },
+        "roxybrowser": {
+          zh: "支持独立浏览器环境与多账号管理的浏览器",
+          en: "Browser with isolated profiles for managing multiple accounts",
         },
         "tiez-clipboard": {
           zh: "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护",
@@ -965,7 +991,7 @@
         const name = source.match(/\n\s*name\s+"([^"]+)"/)?.[1] ?? token;
         const desc = source.match(/\n\s*desc\s+"([^"]+)"/)?.[1] ?? "";
         const homepage = source.match(/\n\s*homepage\s+"([^"]+)"/)?.[1] ?? "";
-        const app = source.match(/\n\s*app\s+"([^"]+)"/)?.[1] ?? "";
+        const app = source.match(/\n\s*(?:app|pkg)\s+"([^"]+)"/)?.[1] ?? "";
         const architectures = [];
 
         for (const match of source.matchAll(/on_(intel|arm)\s+do([\s\S]*?)\n\s*end/g)) {

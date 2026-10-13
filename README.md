@@ -4,7 +4,7 @@
 
 This repository is a Homebrew tap for macOS apps maintained by wangre666. It
 currently publishes casks for GitHub Stars Manager, Kiro Account Manager,
-shandianshuo, and TieZ Clipboard, and provides a GitHub Pages catalog with
+shandianshuo, RoxyBrowser, and TieZ Clipboard, and provides a GitHub Pages catalog with
 versions, install commands, upstream links, and architecture checksums.
 
 ## GitHub Pages
@@ -23,7 +23,7 @@ when served from GitHub Pages.
 Use the app-specific GitHub Actions workflows to refresh casks and the
 `index.html` catalog snapshot.
 
-- Leave `version` empty to use the latest upstream GitHub release.
+- Leave `version` empty to use the latest upstream release (RoxyBrowser uses its official website).
 - Set `version` to a specific value, such as `0.5.4`, to update to that release.
 
 - `Update GitHub Stars Manager cask` refreshes
@@ -36,6 +36,15 @@ Use the app-specific GitHub Actions workflows to refresh casks and the
   `version` is empty, it uses the latest macOS release that includes both x64
   and aarch64 DMG assets.
 
-Each workflow downloads the expected upstream DMG asset or assets, recalculates
+- `Update RoxyBrowser cask` refreshes `Casks/roxybrowser.rb` using the official
+  macOS version endpoint and separate Apple Silicon/Intel PKG installers.
+
+Install RoxyBrowser (macOS 12 or later):
+
+```sh
+brew install --cask wangre666/tap/roxybrowser
+```
+
+Each workflow downloads the expected upstream DMG or PKG assets, recalculates
 the `sha256` values, updates the cask and catalog page, and opens a pull
 request.

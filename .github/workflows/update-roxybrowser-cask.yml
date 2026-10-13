@@ -1,0 +1,274 @@
+name: Update RoxyBrowser cask
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Mac version to publish, for example 4.0.7. Leave empty to use the official website version."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update-cask:
+    runs-on: ubuntu-latest
+    env:
+      CASK_FILE: Casks/roxybrowser.rb
+      INDEX_FILE: index.html
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - name: Check out tap
+        uses: actions/checkout@v6
+
+      - name: Resolve version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          requested_version="$REQUESTED_VERSION"
+          if [[ -z "$requested_version" ]]; then
+            requested_version="$(curl --fail --silent --show-error --location --retry 3 \
+              https://roxybrowser.com/app_statistics/get_official_website_version_data_config \
+              | jq -er 'select(.code == 0) | .data.macVersion | strings | select(length > 0)')"
+          fi
+
+          version="${requested_version#v}"
+          if [[ ! "$version" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+            echo "Invalid version: $requested_version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+
+      - name: Check if update is needed
+        id: check
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          current_version="$(grep -m1 'version "' "$CASK_FILE" | sed 's/.*version "\(.*\)"/\1/')"
+          upstream_version="${{ steps.version.outputs.version }}"
+
+          if [[ "$current_version" == "$upstream_version" ]]; then
+            echo "Cask is already up to date (v$current_version)."
+            echo "needed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "Update needed: v$current_version -> v$upstream_version"
+            echo "needed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release asset and calculate hash
+        id: hashes
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          base_url="https://sgp1.vultrobjects.com/roxybrowseross/private/package/app/macOS"
+          for arch in apple intel; do
+            asset="RoxyBrowser_${arch}_${version}.pkg"
+            curl --fail --location --retry 3 --output "$asset" "$base_url/$arch/$version/$asset"
+            sha="$(sha256sum "$asset" | awk '{print $1}')"
+            echo "sha_${arch}=$sha" >> "$GITHUB_OUTPUT"
+          done
+
+      - name: Update cask
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          cask_file = ENV.fetch("CASK_FILE")
+          version = ENV.fetch("VERSION")
+          hashes = { "arm" => ENV.fetch("SHA_ARM64"), "intel" => ENV.fetch("SHA_X64") }
+
+          def replace!(content, pattern, replacement)
+            abort("Could not update cask: pattern did not match #{pattern.inspect}") unless content.match?(pattern)
+            content.sub(pattern, replacement)
+          end
+
+          content = File.read(cask_file)
+          content = replace!(content, /version "[^"]+"/, %(version "#{version}"))
+          hashes.each do |arch, sha|
+            abort("Invalid SHA256 for #{arch}") unless sha.match?(/\A[0-9a-f]{64}\z/)
+            pattern = /(on_#{arch} do\n)(.*?)(\n  end)/m
+            abort("Missing architecture block: #{arch}") unless content.match?(pattern)
+            content = content.sub(pattern) do
+              opening, body, closing = $1, $2, $3
+              opening + replace!(body, /sha256 "[0-9a-f]{64}"/, %(sha256 "#{sha}")) + closing
+            end
+          end
+
+          File.write(cask_file, content)
+          RUBY
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          SHA_ARM64: ${{ steps.hashes.outputs.sha_apple }}
+          SHA_X64: ${{ steps.hashes.outputs.sha_intel }}
+
+      - name: Validate cask syntax
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: ruby -c "$CASK_FILE"
+
+      - name: Update HTML catalog snapshot
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ruby <<'RUBY'
+          require "json"
+
+          index_file = ENV.fetch("INDEX_FILE")
+          localized_descriptions = {
+            "github-stars-manager" => {
+              "zh" => "由 AI 驱动的 GitHub Stars 管理工具，支持语义搜索和发布跟踪",
+            },
+            "kiro-account-manager" => {
+              "zh" => "Kiro IDE 账号管理工具，支持多账号切换和配额监控",
+            },
+            "shandianshuo" => {
+              "zh" => "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
+            },
+            "roxybrowser" => {
+              "zh" => "支持独立浏览器环境与多账号管理的浏览器",
+            },
+            "tiez-clipboard" => {
+              "zh" => "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护",
+            },
+          }
+
+          def interpolate(template, version)
+            template
+              .gsub('#{version}', version)
+              .gsub('v#{version}', "v#{version}")
+          end
+
+          def architecture_name_for_source(source, url)
+            arch_dependency = source[/depends_on\s+arch:\s*:([a-z0-9_]+)/, 1]
+            return "Apple Silicon" if arch_dependency == "arm64"
+            return "Intel" if ["intel", "x86_64"].include?(arch_dependency)
+            return "Apple Silicon" if url.match?(/[._-](arm64|aarch64)([._-]|$)/i)
+            return "Intel" if url.match?(/[._-](x64|x86_64|amd64)([._-]|$)/i)
+
+            "Universal"
+          end
+
+          def version_segments(version)
+            version.split(/[.-]/).map do |part|
+              part.match?(/\A\d+\z/) ? [0, part.to_i] : [1, part]
+            end
+          end
+
+          def parse_cask(path, localized_descriptions)
+            source = File.read(path)
+            token = source[/cask\s+"([^"]+)"/, 1]
+            abort("Could not parse cask token from #{path}") unless token
+
+            version = source[/version\s+"([^"]+)"/, 1] || "unknown"
+            architectures = source.scan(/on_(intel|arm)\s+do([\s\S]*?)\n\s*end/).map do |arch, block|
+              url = block[/url\s+"([^"]+)"/, 1] || ""
+              sha256 = block[/sha256\s+"([^"]+)"/, 1] || ""
+
+              {
+                "name" => arch == "arm" ? "Apple Silicon" : "Intel",
+                "url" => interpolate(url, version),
+                "sha256" => sha256,
+              }
+            end
+
+            if architectures.empty?
+              url = source[/\n\s*url\s+"([^"]+)"/, 1] || ""
+              sha256 = source[/\n\s*sha256\s+"([^"]+)"/, 1] || ""
+              interpolated_url = interpolate(url, version)
+              architectures << {
+                "name" => architecture_name_for_source(source, interpolated_url),
+                "url" => interpolated_url,
+                "sha256" => sha256,
+              } if !url.empty? || !sha256.empty?
+            end
+
+            item = {
+              "type" => "cask",
+              "token" => token,
+              "version" => version,
+              "name" => source[/\n\s*name\s+"([^"]+)"/, 1] || token,
+              "desc" => source[/\n\s*desc\s+"([^"]+)"/, 1] || "",
+              "homepage" => source[/\n\s*homepage\s+"([^"]+)"/, 1] || "",
+              "app" => source[/\n\s*(?:app|pkg)\s+"([^"]+)"/, 1] || "",
+              "architectures" => architectures,
+            }
+
+            desc_zh = localized_descriptions.dig(token, "zh")
+            item["descZh"] = desc_zh if desc_zh
+            item
+          end
+
+          snapshot = Dir["Casks/*.rb"]
+            .map { |path| parse_cask(path, localized_descriptions) }
+            .sort_by { |item| item.fetch("token") }
+          latest = snapshot
+            .filter_map { |item| item["version"] if item["version"] && item["version"] != "unknown" }
+            .max { |left, right| version_segments(left) <=> version_segments(right) } || "-"
+
+          content = File.read(index_file)
+          snapshot_js = "      const SNAPSHOT = #{JSON.pretty_generate(snapshot).gsub(/^/, '      ').sub(/\A\s+/, '')};"
+
+          unless content.match?(/      const SNAPSHOT = \[\n.*?\n      \];/m)
+            abort("Could not update HTML catalog: SNAPSHOT block was not found")
+          end
+
+          content = content.sub(/      const SNAPSHOT = \[\n.*?\n      \];/m, snapshot_js)
+          content = content.sub(
+            /(<span class="board-value" id="updatedCount">)[^<]*(<\/span>)/,
+            "\\1#{latest}\\2"
+          )
+
+          File.write(index_file, content)
+          RUBY
+
+      - name: Push update branch and open PR
+        if: steps.check.outputs.needed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.version.outputs.version }}"
+          branch="update/roxybrowser-v$version"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add "$CASK_FILE" "$INDEX_FILE"
+          git commit -m "Update RoxyBrowser cask and catalog to v$version"
+
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "refs/heads/$branch:refs/remotes/origin/$branch"
+            remote_sha="$(git rev-parse "refs/remotes/origin/$branch")"
+            git push --force-with-lease="refs/heads/$branch:$remote_sha" origin "HEAD:refs/heads/$branch"
+          else
+            git push origin "HEAD:refs/heads/$branch"
+          fi
+
+          if gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --json number --jq '.[0].number' | grep -q '^[0-9]'; then
+            echo "PR already exists for $branch, skipping."
+          else
+            gh pr create \
+              --repo "$GITHUB_REPOSITORY" \
+              --base main \
+              --head "$branch" \
+              --title "Update RoxyBrowser cask to v$version" \
+              --body "Updates the RoxyBrowser cask to v$version, refreshes sha256, and updates the GitHub Pages catalog snapshot."
+          fi

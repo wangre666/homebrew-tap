@@ -145,6 +145,9 @@ jobs:
             "shandianshuo" => {
               "zh" => "端侧优先的 AI 语音助手，支持语音输入、回复和编辑操作",
             },
+            "roxybrowser" => {
+              "zh" => "支持独立浏览器环境与多账号管理的浏览器",
+            },
             "tiez-clipboard" => {
               "zh" => "跨平台剪贴板管理器，支持历史记录、标签、同步和隐私保护",
             },
@@ -207,7 +210,7 @@ jobs:
               "name" => source[/\n\s*name\s+"([^"]+)"/, 1] || token,
               "desc" => source[/\n\s*desc\s+"([^"]+)"/, 1] || "",
               "homepage" => source[/\n\s*homepage\s+"([^"]+)"/, 1] || "",
-              "app" => source[/\n\s*app\s+"([^"]+)"/, 1] || "",
+              "app" => source[/\n\s*(?:app|pkg)\s+"([^"]+)"/, 1] || "",
               "architectures" => architectures,
             }
 

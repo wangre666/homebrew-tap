@@ -1,16 +1,16 @@
 cask "roxybrowser" do
   arch arm: "apple", intel: "intel"
 
-  version "4.0.7"
+  version "4.0.9"
 
   on_arm do
     url "https://sgp1.vultrobjects.com/roxybrowseross/private/package/app/macOS/apple/#{version}/RoxyBrowser_apple_#{version}.pkg"
-    sha256 "773208628a5be6282d7e5684dfdcee5e82525965d3c7fbbec38c3d6956ec9dee"
+    sha256 "e243b5783fb1a9aa499ab407a4f75f6a4a11c6e307e0036906cd666c007fe18e"
   end
 
   on_intel do
     url "https://sgp1.vultrobjects.com/roxybrowseross/private/package/app/macOS/intel/#{version}/RoxyBrowser_intel_#{version}.pkg"
-    sha256 "759eefb7c7e1d77fec4fe0f661e3d47249face5434f70efa847089279dad3f4a"
+    sha256 "8fd53aa66ba99d382944378f63625f237e0a003f602d5ad37fe8bf796f5f2067"
   end
 
   name "RoxyBrowser"

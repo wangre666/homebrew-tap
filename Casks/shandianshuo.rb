@@ -1,14 +1,14 @@
 cask "shandianshuo" do
-  version "0.8.0"
+  version "0.8.2"
 
   on_arm do
     url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_arm64.dmg"
-    sha256 "cc1ab56878bfe610d588e1bea7e1ce9c34a33d9a4e75f0b962dadc995f4d0343"
+    sha256 "0084ee59ce1fa0fc2a7a21da5254e6a215e939f0d7095224495be6537341cee7"
   end
 
   on_intel do
     url "https://github.com/shandianshuo/shandianshuo-releases/releases/download/v#{version}/shandianshuo_#{version}_x64.dmg"
-    sha256 "d84de98062ff70ca97ca0aa87298af54268666d479c295d1c4eb471599fe972b"
+    sha256 "a1d79f5879ba3afb692a3d9f29768aaf50c975d77a956191547aeadf945fac01"
   end
 
   name "闪电说"

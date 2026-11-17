@@ -4,7 +4,7 @@
 
 This repository is a Homebrew tap for macOS apps maintained by wangre666. It
 currently publishes casks for GitHub Stars Manager, Kiro Account Manager,
-shandianshuo and TieZ Clipboard, and provides a GitHub Pages catalog with
+shandianshuo, TieZ Clipboard, and WeChatBridge, and provides a GitHub Pages catalog with
 versions, install commands, upstream links, and architecture checksums.
 
 ## GitHub Pages

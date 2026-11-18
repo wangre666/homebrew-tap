@@ -1,14 +1,14 @@
 cask "github-stars-manager" do
-  version "0.9.0"
+  version "0.9.1"
 
   on_intel do
     url "https://github.com/AmintaCCCP/GithubStarsManager/releases/download/v#{version}/GitHub.Stars.Manager-#{version}.dmg"
-    sha256 "818e53f0933dcbce1451436ae8fbc7fb9c43228ec3f3c002c81dfab2d773d621"
+    sha256 "8c40e038096e72c78d6a808b356238d07bd6dd2de4891cea7cb3a7bd186a2583"
   end
 
   on_arm do
     url "https://github.com/AmintaCCCP/GithubStarsManager/releases/download/v#{version}/GitHub.Stars.Manager-#{version}-arm64.dmg"
-    sha256 "d5fe188f2dfa3997f218ed23a6b13054423ad88ff0b65d3ff4d01814c2687c5d"
+    sha256 "2d354ad0ee3a2fc37ca2ed2efde47758f391a8a45d8d28aabd978d0a53f47f51"
   end
 
   name "GitHub Stars Manager"

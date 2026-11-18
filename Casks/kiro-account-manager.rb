@@ -1,14 +1,14 @@
 cask "kiro-account-manager" do
-  version "1.9.301"
+  version "1.9.3"
 
   on_intel do
     url "https://github.com/hj01857655/kiro-account-manager/releases/download/v#{version}/KiroAccountManager_#{version}_x64.dmg"
-    sha256 "6740fa9d9a465548cabf745e9beb7cc68cded7cef2146830ee00449e4229d1dc"
+    sha256 "28f40374aa17923f9726c28fb16ec63d35898b75a16a477ece70f0fc66f34484"
   end
 
   on_arm do
     url "https://github.com/hj01857655/kiro-account-manager/releases/download/v#{version}/KiroAccountManager_#{version}_aarch64.dmg"
-    sha256 "f3f19614e84b8891b4cb30b72518f9425a23e463799f90b9d97116bd6495150f"
+    sha256 "54b36117352994ce332544b924ca5a13896a718318a46ad2cc1de118c5e4eb0e"
   end
 
   name "Kiro Account Manager"

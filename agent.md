@@ -10,7 +10,8 @@ Agent workflow (for manual intervention or debugging):
 
    ```sh
    gh workflow run update-github-stars-manager-cask.yml --repo wangre666/homebrew-tap
-   gh workflow run update-kiro-account-manager-cask.yml --repo wangre666/homebrew-tap
+   gh workflow run update-shandianshuo-cask.yml --repo wangre666/homebrew-tap
+   gh workflow run update-tiez-clipboard-cask.yml --repo wangre666/homebrew-tap
    ```
 
 2. Check the workflow run result and logs:

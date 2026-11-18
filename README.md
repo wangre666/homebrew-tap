@@ -3,8 +3,8 @@
 ## About
 
 This repository is a Homebrew tap for macOS apps maintained by wangre666. It
-currently publishes casks for GitHub Stars Manager, Kiro Account Manager,
-shandianshuo, TieZ Clipboard, and WeChatBridge, and provides a GitHub Pages catalog with
+currently publishes casks for GitHub Stars Manager, shandianshuo, TieZ
+Clipboard, and WeChatBridge, and provides a GitHub Pages catalog with
 versions, install commands, upstream links, and architecture checksums.
 
 ## GitHub Pages
@@ -28,9 +28,6 @@ Use the app-specific GitHub Actions workflows to refresh casks and the
 
 - `Update GitHub Stars Manager cask` refreshes
   `Casks/github-stars-manager.rb`.
-- `Update Kiro Account Manager cask` refreshes
-  `Casks/kiro-account-manager.rb`. When `version` is empty, it uses the latest
-  release that includes both macOS x64 and aarch64 DMG assets.
 - `Update shandianshuo cask` refreshes `Casks/shandianshuo.rb`.
 - `Update TieZ Clipboard cask` refreshes `Casks/tiez-clipboard.rb`. When
   `version` is empty, it uses the latest macOS release that includes both x64
